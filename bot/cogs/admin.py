@@ -56,7 +56,7 @@ class Admin(commands.Cog):
   @commands.check(mod_only)
   async def add_course(self, ctx, *args):
     if not args or len(args) < 4:
-      await ctx.send('Usage: add_course group course day time link')
+      await ctx.send('Usage: add_course group course day timeSlot link gapWeeks startWeek')
       return
     
     group = args[0]
@@ -64,13 +64,16 @@ class Admin(commands.Cog):
     day = args[2]
     timeSlot = int(args[3])
     link = args[4] if len(args) >= 5 else None
+    gapWeeks = int(args[5]) if len(args) >= 6 else 0
+    startWeek = int(args[6]) if len(args) >= 7 else 0
 
     courses = config.get('courses', {})
     if day not in courses:
       courses[day] = []
     if timeSlot >= len(courses[day]):
-      courses[day].insert(timeSlot, [])
-    courses[day][timeSlot].append({ 'group': group, 'courseName': courseName, 'link': link })
+      for i in range(timeSlot - len(courses[day]) + 1):
+        courses[day].append([])
+    courses[day][timeSlot].append({ 'group': group, 'courseName': courseName, 'link': link, 'gapWeeks': gapWeeks, 'startWeek': startWeek })
     config.save('courses', courses)
     await ctx.send(f'Saved course {courseName} for {group} on {day} in time slot {timeSlot}')
 
@@ -84,15 +87,25 @@ class Admin(commands.Cog):
     timeSlots = [{ 'timeBegin': datetime.strptime(timeSlot.split('-')[0], '%H:%M'), 'timeEnd': datetime.strptime(timeSlot.split('-')[1], '%H:%M') } for timeSlot in args]
     config.save('timeSlots', timeSlots)
     await ctx.send(f'Saved {len(timeSlots)} time slots')
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def set_school_start(self, ctx, *args):
+    if not args:
+      await ctx.send('Usage: set_school_start YYYY-MM-DD')
+    
+    schoolStart = datetime.strptime(args[0], '%Y-%m-%d')
+    config.save('schoolStart', schoolStart)
+    await ctx.send(f'School start set to {schoolStart.strftime("%A %Y-%m-%d")}!')
 
   @commands.command()
   @commands.check(mod_only)
   async def save_config(self, ctx):
     config.save_current()
-    await ctx.send("Saved!")
+    await ctx.send('Saved!')
   
   @commands.command()
   @commands.check(mod_only)
   async def reload_config(self, ctx):
     config.reload()
-    await ctx.send("Reloaded!")
+    await ctx.send('Reloaded!')
