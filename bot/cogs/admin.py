@@ -1,5 +1,7 @@
 from discord.ext import commands
 import config
+import embeds
+from datetime import datetime
 
 async def mod_only(ctx):
   try:
@@ -23,6 +25,32 @@ class Admin(commands.Cog):
     ctx.bot.command_prefix = args[0]
     config.save('prefix', args[0])
     await ctx.send('Prefix changed to \"' + args[0] + '"')
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def dynamic_get_courses(self, ctx):
+    day = datetime.now().strftime('%A')
+    
+    message = await ctx.send(embed=embeds.make_courses_embed(day))
+    dynamicMessages = config.get('dynamicGetCourses', [])
+    dynamicMessages.append([message.channel.id, message.id])
+    config.save('dynamicGetCourses', dynamicMessages)
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def dynamic_current_course(self, ctx):    
+    message = await ctx.send(embed=embeds.make_current_course_embed())
+    dynamicMessages = config.get('dynamicCurrentCourse', [])
+    dynamicMessages.append([message.channel.id, message.id])
+    config.save('dynamicCurrentCourse', dynamicMessages)
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def dynamic_next_course(self, ctx):    
+    message = await ctx.send(embed=embeds.make_next_course_embed())
+    dynamicMessages = config.get('dynamicNextCourse', [])
+    dynamicMessages.append([message.channel.id, message.id])
+    config.save('dynamicNextCourse', dynamicMessages)
   
   @commands.command()
   @commands.check(mod_only)
@@ -53,6 +81,18 @@ class Admin(commands.Cog):
       await ctx.send('Usage: set_time_slots timeBegin1-timeEnd1 timeBegin2-timeEnd2 ...')
       return
     
-    timeSlots = [{ 'timeBegin': timeSlot.split('-')[0], 'timeEnd': timeSlot.split('-')[1] } for timeSlot in args]
+    timeSlots = [{ 'timeBegin': datetime.strptime(timeSlot.split('-')[0], '%H:%M'), 'timeEnd': datetime.strptime(timeSlot.split('-')[1], '%H:%M') } for timeSlot in args]
     config.save('timeSlots', timeSlots)
     await ctx.send(f'Saved {len(timeSlots)} time slots')
+
+  @commands.command()
+  @commands.check(mod_only)
+  async def save_config(self, ctx):
+    config.save_current()
+    await ctx.send("Saved!")
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def reload_config(self, ctx):
+    config.reload()
+    await ctx.send("Reloaded!")

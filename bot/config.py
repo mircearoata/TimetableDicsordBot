@@ -1,4 +1,4 @@
-import json
+import jsonpickle
 import os
 
 configPath = os.path.dirname(os.path.realpath(__file__)) + '\..\config.json'
@@ -6,10 +6,12 @@ configPath = os.path.dirname(os.path.realpath(__file__)) + '\..\config.json'
 data = None
 
 def read():
-  return json.load(open(configPath, 'r'))
+  with open(configPath, 'r+') as f:
+    return jsonpickle.decode(f.read())
 
 def write(data):
-  return json.dump(data, open(configPath, 'w+'))
+  with open(configPath, 'w+') as f:
+    f.write(jsonpickle.encode(data, indent=2))
 
 def get(key: str, default=None):
   global data
@@ -24,3 +26,11 @@ def save(key: str, value):
   global data
   data[key] = value
   write(data)
+
+def save_current():
+  global data
+  write(data)
+
+def reload():
+  global data
+  data = read()
