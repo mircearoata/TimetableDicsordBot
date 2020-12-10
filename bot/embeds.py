@@ -8,10 +8,16 @@ def this_week(course):
   schoolWeek = (now - schoolStart).days // 7
   return schoolWeek % (course['gapWeeks'] + 1) == course['startWeek']
 
-def get_time_slot_embed_content(coursesTimeSlot, maxGroupLength = 0, maxCourseLength = 0):
-  groups = '\n'.join([f'{course["group"]:>{maxGroupLength}}' for course in coursesTimeSlot])
-  courses = '\n'.join([f'{course["courseName"]:>{maxCourseLength}}' for course in coursesTimeSlot])
-  links = '\n'.join([(f'[JOIN]({course["link"]})' if 'link' in course and course['link'] else 'N/A') for course in coursesTimeSlot])
+def get_groups_content(groups):
+  allGroups = config.get('groups', [])
+  if(sorted(groups) == sorted(allGroups)):
+    return f'**__@everyone__**'
+  return ', '.join(f'**__{group}__**' for group in sorted(groups))
+
+def get_time_slot_embed_content(coursesTimeSlot):
+  groups = '\n'.join([get_groups_content(course['groups']) for course in coursesTimeSlot])
+  courses = '\n'.join([f'__{course["courseName"]}__' for course in coursesTimeSlot])
+  links = '\n'.join([(f'**__[JOIN]({course["link"]})__**' if 'link' in course and course['link'] else 'N/A') for course in coursesTimeSlot])
   return groups, courses, links
 
 def get_day_courses(day):
@@ -38,16 +44,13 @@ def make_courses_embed(day):
   timeSlots = config.get('timeSlots', [])
   
   embed = discord.Embed(title=f'Courses on {day}', color=0x00ff00)
-  maxGroupLength = max([0] + [max([0] + [len(course['group']) for course in coursesTimeSlot]) for coursesTimeSlot in dayCourses])
-  maxCourseLength = max([0] + [max([0] + [len(course['courseName']) for course in coursesTimeSlot]) for coursesTimeSlot in dayCourses])
-  maxLinkLength = max([0] + [max([0] + [(len('JOIN') if 'link' in course else len('N/A')) for course in coursesTimeSlot]) for coursesTimeSlot in dayCourses])
   for i, timeSlot in enumerate(timeSlots):
-    groups = 'N/A' + ' ' * (maxGroupLength - 3)
-    courses = 'N/A' + ' ' * (maxCourseLength - 3)
-    links = 'N/A' + ' ' * (maxLinkLength - 3)
+    groups = 'N/A'
+    courses = 'N/A'
+    links = 'N/A'
     
     if i < len(dayCourses) and len(dayCourses[i]) > 0:
-      groups, courses, links = get_time_slot_embed_content(dayCourses[i], maxGroupLength, maxCourseLength)
+      groups, courses, links = get_time_slot_embed_content(dayCourses[i])
 
     embed.add_field(name=f'{timeSlot["timeBegin"].strftime("%H:%M")} - {timeSlot["timeEnd"].strftime("%H:%M")}', value=groups, inline=True)
     embed.add_field(name='Course', value=courses, inline=True)

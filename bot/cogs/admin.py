@@ -2,6 +2,7 @@ from discord.ext import commands
 import config
 import embeds
 from datetime import datetime
+import typing
 
 async def mod_only(ctx):
   try:
@@ -35,6 +36,8 @@ class Admin(commands.Cog):
     dynamicMessages = config.get('dynamicGetCourses', [])
     dynamicMessages.append([message.channel.id, message.id])
     config.save('dynamicGetCourses', dynamicMessages)
+
+    await ctx.message.delete()
   
   @commands.command()
   @commands.check(mod_only)
@@ -43,6 +46,8 @@ class Admin(commands.Cog):
     dynamicMessages = config.get('dynamicCurrentCourse', [])
     dynamicMessages.append([message.channel.id, message.id])
     config.save('dynamicCurrentCourse', dynamicMessages)
+
+    await ctx.message.delete()
   
   @commands.command()
   @commands.check(mod_only)
@@ -51,15 +56,17 @@ class Admin(commands.Cog):
     dynamicMessages = config.get('dynamicNextCourse', [])
     dynamicMessages.append([message.channel.id, message.id])
     config.save('dynamicNextCourse', dynamicMessages)
+
+    await ctx.message.delete()
   
   @commands.command()
   @commands.check(mod_only)
   async def add_course(self, ctx, *args):
     if not args or len(args) < 4:
-      await ctx.send('Usage: add_course group course day timeSlot link gapWeeks startWeek')
+      await ctx.send('Usage: add_course @group1,@group2... course day timeSlot link gapWeeks startWeek')
       return
     
-    group = args[0]
+    groups = args[0].split(',')
     courseName = args[1]
     day = args[2]
     timeSlot = int(args[3])
@@ -73,21 +80,17 @@ class Admin(commands.Cog):
     if timeSlot >= len(courses[day]):
       for i in range(timeSlot - len(courses[day]) + 1):
         courses[day].append([])
-    courses[day][timeSlot].append({ 'group': group, 'courseName': courseName, 'link': link, 'gapWeeks': gapWeeks, 'startWeek': startWeek })
+    courses[day][timeSlot].append({ 'groups': groups, 'courseName': courseName, 'link': link, 'gapWeeks': gapWeeks, 'startWeek': startWeek })
     config.save('courses', courses)
-    await ctx.send(f'Saved course {courseName} for {group} on {day} in time slot {timeSlot}{f" (once every {gapWeeks + 1} weeks, starting week {startWeek + 1})"if gapWeeks > 0 else ""}')
+    await ctx.send(f'Saved course {courseName} for {len(groups)} groups on {day} in time slot {timeSlot}{f" (once every {gapWeeks + 1} weeks, starting week {startWeek + 1})"if gapWeeks > 0 else ""}')
   
   @commands.command()
   @commands.check(mod_only)
-  async def remove_course(self, ctx, *args):
-    if not args or len(args) < 3:
-      await ctx.send('Usage: remove_course day timeSlot group')
+  async def remove_course(self, ctx, day: str, timeSlot: int, removeIdx: typing.Optional[int]):
+    if not day or not timeSlot:
+      await ctx.send('Usage: remove_course day timeSlot [removeIdx]')
       return
     
-    day = args[0]
-    timeSlot = int(args[1])
-    group = args[2]
-
     courses = config.get('courses', {})
     
     if day not in courses:
@@ -97,10 +100,27 @@ class Admin(commands.Cog):
       await ctx.send(f'Course not found!')
       return
     
-    toRemove = next(course for course in courses[day][timeSlot] if course['group'] == group)
-    courses[day][timeSlot].remove(toRemove)
+    if len(courses[day][timeSlot]) > 1 and not removeIdx:
+      await ctx.send('More than 1 course in that time slot. Choose one:\n' + '\n'.join(f'{idx}. {course["courseName"]} for {len(course["groups"])} groups' for idx, course in enumerate(courses[day][timeSlot])))
+      return  
+
+    if not removeIdx:
+      removeIdx = 0
+
+    removed = courses[day][timeSlot].pop(removeIdx)
     config.save('courses', courses)
-    await ctx.send(f'Removed course {toRemove["courseName"]} for {group} on {day} in time slot {timeSlot}')
+    await ctx.send(f'Removed course {removed["courseName"]} on {day} in time slot {timeSlot}')
+
+  @commands.command()
+  @commands.check(mod_only)
+  async def set_groups(self, ctx, *args):
+    if not args:
+      await ctx.send('Usage: set_groups @group1 @group2 ...')
+      return
+    
+    groups = args
+    config.save('groups', groups)
+    await ctx.send(f'Saved {len(groups)} groups')
 
   @commands.command()
   @commands.check(mod_only)
