@@ -1,7 +1,7 @@
 import jsonpickle
 import os
 
-configPath = os.path.dirname(os.path.realpath(__file__)) + '\..\config.json'
+configPath = os.path.dirname(os.path.realpath(__file__)) + '/../config/config.json'
 
 data = None
 
