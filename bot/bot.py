@@ -7,6 +7,7 @@ import traceback
 from cogs.admin import Admin
 from cogs.interaction import Interaction
 from cogs.dynamicMessages import DynamicMessages
+from cogs.courseStart import CourseStart
 
 assert(os.environ.get('TIMETABLE_BOT_TOKEN'))
 
@@ -17,12 +18,14 @@ class Bot(discord.ext.commands.Bot):
     self.add_cog(Admin())
     self.add_cog(Interaction())
     self.add_cog(DynamicMessages(self))
+    self.add_cog(CourseStart(self))
 
   async def on_ready(self):
     # self.modchannel = self.get_channel(int(config.get('mod_channel')))
     # assert (self.modchannel, 'I couldn't fetch the mod channel, please check the config')
     print('We have logged in as {0.user}'.format(self))
     self.get_cog('DynamicMessages').start()
+    self.get_cog('CourseStart').start()
 
   async def on_error(self, event, *args, **kwargs):
     type, value, tb = sys.exc_info()

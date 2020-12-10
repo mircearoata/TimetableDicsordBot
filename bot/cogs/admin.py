@@ -121,6 +121,16 @@ class Admin(commands.Cog):
     groups = args
     config.save('groups', groups)
     await ctx.send(f'Saved {len(groups)} groups')
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def set_course_start_channel(self, ctx, channel: str):
+    if not channel:
+      await ctx.send('Usage: set_course_start_channel #channel')
+      return
+    
+    config.save('courseStartChannel', channel[2:-1])
+    await ctx.send(f'Course start notificaions will be sent in {channel}')
 
   @commands.command()
   @commands.check(mod_only)
@@ -142,6 +152,16 @@ class Admin(commands.Cog):
     schoolStart = datetime.strptime(args[0], '%Y-%m-%d')
     config.save('schoolStart', schoolStart)
     await ctx.send(f'School start set to {schoolStart.strftime("%A %Y-%m-%d")}!')
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def set_notification_lifetime(self, ctx, lifespan: int):
+    if not lifespan:
+      await ctx.send('Usage: set_notification_lifetime seconds')
+      return
+    
+    config.save('notificationLifespan', lifespan)
+    await ctx.send(f'Notifications will be deleted after {lifespan} seconds')
 
   @commands.command()
   @commands.check(mod_only)

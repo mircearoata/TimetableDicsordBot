@@ -1,12 +1,7 @@
 import config
 import discord
-from datetime import datetime, date, time, timedelta
-
-def this_week(course):
-  now = datetime.now()
-  schoolStart = config.get('schoolStart', datetime.now())
-  schoolWeek = (now - schoolStart).days // 7
-  return schoolWeek % (course['gapWeeks'] + 1) == course['startWeek']
+from datetime import datetime
+from utils import get_day_courses, format_timedelta, time_diff
 
 def get_groups_content(groups):
   allGroups = config.get('groups', [])
@@ -19,23 +14,6 @@ def get_time_slot_embed_content(coursesTimeSlot):
   courses = '\n'.join([f'__{course["courseName"]}__' for course in coursesTimeSlot])
   links = '\n'.join([(f'**__[JOIN]({course["link"]})__**' if 'link' in course and course['link'] else 'N/A') for course in coursesTimeSlot])
   return groups, courses, links
-
-def get_day_courses(day):
-  allCourses = config.get('courses', {})
-  dayCourses = []
-  if day in allCourses:
-    dayCourses = allCourses[day]
-  dayCourses = [list(filter(this_week, timeSlotCourses)) for timeSlotCourses in dayCourses]
-  return dayCourses
-
-def format_timedelta(timeDelta: timedelta):
-  minutes, seconds = divmod(timeDelta.seconds, 60)
-  if minutes > 0:
-    return f'{minutes} minutes'
-  return f'{seconds} seconds'
-  
-def time_diff(time1: time, time2: time):
-  return datetime.combine(date.today(), time2) - datetime.combine(date.today(), time1)
 
 def make_courses_embed(day):
   day = day.lower()
@@ -119,3 +97,13 @@ def make_next_course_embed():
   except StopIteration:
       embed = discord.Embed(title=f'No upcoming course', color=0x00ff00)
       return embed
+
+def make_course_embed(timeSlot, course):
+  groups, courses, links = get_time_slot_embed_content([course])
+  
+  embed = discord.Embed(title=f'{course["courseName"]} ({timeSlot["timeBegin"].strftime("%H:%M")} - {timeSlot["timeEnd"].strftime("%H:%M")})', color=0x00ff00)
+  embed.add_field(name=f'{timeSlot["timeBegin"].strftime("%H:%M")} - {timeSlot["timeEnd"].strftime("%H:%M")}', value=groups, inline=True)
+  embed.add_field(name='Course', value=courses, inline=True)
+  embed.add_field(name='Link', value=links, inline=True)
+  
+  return embed
