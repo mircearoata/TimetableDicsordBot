@@ -75,7 +75,32 @@ class Admin(commands.Cog):
         courses[day].append([])
     courses[day][timeSlot].append({ 'group': group, 'courseName': courseName, 'link': link, 'gapWeeks': gapWeeks, 'startWeek': startWeek })
     config.save('courses', courses)
-    await ctx.send(f'Saved course {courseName} for {group} on {day} in time slot {timeSlot}')
+    await ctx.send(f'Saved course {courseName} for {group} on {day} in time slot {timeSlot}{f" (once every {gapWeeks + 1} weeks, starting week {startWeek + 1})"if gapWeeks > 0 else ""}')
+  
+  @commands.command()
+  @commands.check(mod_only)
+  async def remove_course(self, ctx, *args):
+    if not args or len(args) < 3:
+      await ctx.send('Usage: remove_course day timeSlot group')
+      return
+    
+    day = args[0]
+    timeSlot = int(args[1])
+    group = args[2]
+
+    courses = config.get('courses', {})
+    
+    if day not in courses:
+      await ctx.send(f'Course not found!')
+      return
+    if timeSlot >= len(courses[day]):
+      await ctx.send(f'Course not found!')
+      return
+    
+    toRemove = next(course for course in courses[day][timeSlot] if course['group'] == group)
+    courses[day][timeSlot].remove(toRemove)
+    config.save('courses', courses)
+    await ctx.send(f'Removed course {toRemove["courseName"]} for {group} on {day} in time slot {timeSlot}')
 
   @commands.command()
   @commands.check(mod_only)
