@@ -165,6 +165,16 @@ class Admin(commands.Cog):
 
   @commands.command()
   @commands.check(mod_only)
+  async def set_course_start_everyone(self, ctx, mentionEveryone: bool):
+    if mentionEveryone == None:
+      await ctx.send('Usage: set_course_start_everyone True/False')
+      return
+    
+    config.save('courseStartMentionEveryone', mentionEveryone)
+    await ctx.send(f'Course start notifications will {"not " if not mentionEveryone else ""}mention everyone')
+
+  @commands.command()
+  @commands.check(mod_only)
   async def save_config(self, ctx):
     config.save_current()
     await ctx.send('Saved!')

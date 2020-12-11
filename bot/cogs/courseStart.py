@@ -30,3 +30,5 @@ class CourseStart(commands.Cog):
         for course in dayCourses[timeSlotIdx]:
           embed = embeds.make_course_embed(currentTimeSlot, course)
           await self.bot.get_channel(int(config.get('courseStartChannel'))).send(', '.join(course['groups']) + ' your course is starting', embed=embed, delete_after=config.get('notificationLifespan', 5 * 60))
+        if config.get('courseStartMentionEveryone', False):
+          await self.bot.get_channel(int(config.get('courseStartChannel'))).send('@everyone', delete_after=config.get('notificationLifespan', 5 * 60))
