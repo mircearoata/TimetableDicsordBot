@@ -1,11 +1,10 @@
 FROM python:3.8.3
 
+COPY . ./requirements.txt
+RUN pip install -r requirements.txt
+
 COPY . /app
-
-WORKDIR /app/bot
-
-RUN pip install -r ../requirements.txt
 
 VOLUME /app/config
 
-CMD python ./bot.py
+CMD python ./bot/bot.py
