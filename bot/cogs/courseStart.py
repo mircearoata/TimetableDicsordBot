@@ -5,6 +5,8 @@ import config
 import embeds
 from datetime import datetime
 
+UPDATE_INTERVAL = 5.0
+
 class CourseStart(commands.Cog):
   def __init__(self, bot):
     super().__init__()
@@ -14,7 +16,7 @@ class CourseStart(commands.Cog):
   def start(self):
     self.check_course_start.start()
 
-  @tasks.loop(seconds=5.0)
+  @tasks.loop(seconds=UPDATE_INTERVAL)
   async def check_course_start(self):
     now = datetime.now()
     day = now.strftime('%A')
