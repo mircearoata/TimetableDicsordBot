@@ -5,7 +5,7 @@ import config
 import embeds
 from datetime import datetime
 
-UPDATE_INTERVAL = 5.0
+UPDATE_INTERVAL = 1.0
 
 class CourseStart(commands.Cog):
   def __init__(self, bot):
