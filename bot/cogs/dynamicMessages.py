@@ -29,21 +29,27 @@ class DynamicMessages(commands.Cog):
     await message.edit(*args, **kwargs)
     return True
 
-  @tasks.loop(seconds=UPDATE_INTERVAL)
-  async def update_dynamic_get_courses(self):
-    day = datetime.now().strftime('%A')
-    embed = embeds.make_courses_embed(day)
-    dynamicMessages = config.get('dynamicGetCourses', [])
+  async def update_messages(self, messages, embed):
     toRemove = []
-    
-    for messageData in dynamicMessages:
+    for messageData in messages:
+      messageStr = f'{messageData[0]}/{messageData[1]}'
       if not await self.try_edit_message(int(messageData[0]), int(messageData[1]), embed=embed):
-        messageStr = f'{messageData[0]}/{messageData[1]}'
         if messageStr not in self.failed:
           self.failed[messageStr] = 0
         self.failed[messageStr] += 1
         if self.failed[messageStr] > FAIL_COUNT:
           toRemove.append(messageData)
+      else:
+        self.failed.pop(messageStr, None)
+    return toRemove
+
+  @tasks.loop(seconds=UPDATE_INTERVAL)
+  async def update_dynamic_get_courses(self):
+    day = datetime.now().strftime('%A')
+    embed = embeds.make_courses_embed(day)
+    dynamicMessages = config.get('dynamicGetCourses', [])
+
+    toRemove = await self.update_messages(dynamicMessages, embed)
     
     for remove in toRemove:
       dynamicMessages.remove(remove)
@@ -54,16 +60,8 @@ class DynamicMessages(commands.Cog):
   async def update_dynamic_current_course(self):
     embed = embeds.make_current_course_embed()
     dynamicMessages = config.get('dynamicCurrentCourse', [])
-    toRemove = []
     
-    for messageData in dynamicMessages:
-      if not await self.try_edit_message(int(messageData[0]), int(messageData[1]), embed=embed):
-        messageStr = f'{messageData[0]}/{messageData[1]}'
-        if messageStr not in self.failed:
-          self.failed[messageStr] = 0
-        self.failed[messageStr] += 1
-        if self.failed[messageStr] > FAIL_COUNT:
-          toRemove.append(messageData)
+    toRemove = await self.update_messages(dynamicMessages, embed)
     
     for remove in toRemove:
       dynamicMessages.remove(remove)
@@ -74,16 +72,8 @@ class DynamicMessages(commands.Cog):
   async def update_dynamic_next_course(self):
     embed = embeds.make_next_course_embed()
     dynamicMessages = config.get('dynamicNextCourse', [])
-    toRemove = []
-    
-    for messageData in dynamicMessages:
-      if not await self.try_edit_message(int(messageData[0]), int(messageData[1]), embed=embed):
-        messageStr = f'{messageData[0]}/{messageData[1]}'
-        if messageStr not in self.failed:
-          self.failed[messageStr] = 0
-        self.failed[messageStr] += 1
-        if self.failed[messageStr] > FAIL_COUNT:
-          toRemove.append(messageData)
+
+    toRemove = await self.update_messages(dynamicMessages, embed)
     
     for remove in toRemove:
       dynamicMessages.remove(remove)
