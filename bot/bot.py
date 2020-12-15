@@ -1,9 +1,9 @@
 import os
 import discord
-from discord.ext import commands
-import config
 import sys
 import traceback
+import config
+from migrations import migrations
 from cogs.admin import Admin
 from cogs.interaction import Interaction
 from cogs.dynamicMessages import DynamicMessages
@@ -40,6 +40,8 @@ class Bot(discord.ext.commands.Bot):
     tbs = tbs + '```'
     print(tbs.replace('```', ''))
     # await self.get_channel(self.modchannel).send(tbs)
+
+migrations()
 
 client = Bot(config.get('prefix', ';'))
 client.run(os.environ.get('TIMETABLE_BOT_TOKEN'))

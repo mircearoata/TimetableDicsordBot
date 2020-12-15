@@ -63,16 +63,17 @@ class Admin(commands.Cog):
   @commands.check(mod_only)
   async def add_course(self, ctx, *args):
     if not args or len(args) < 4:
-      await ctx.send('Usage: add_course @group1,@group2... course day timeSlot link gapWeeks startWeek')
+      await ctx.send('Usage: add_course @group1,@group2... course day timeSlot noNotify link gapWeeks startWeek')
       return
     
     groups = args[0].split(',')
     courseName = args[1]
     day = args[2]
     timeSlot = int(args[3])
-    link = args[4] if len(args) >= 5 else None
-    gapWeeks = int(args[5]) if len(args) >= 6 else 0
-    startWeek = int(args[6]) if len(args) >= 7 else 0
+    noNotify = args[4] if len(args) >= 5 else False
+    link = args[5] if len(args) >= 6 else None
+    gapWeeks = int(args[6]) if len(args) >= 7 else 0
+    startWeek = int(args[7]) if len(args) >= 8 else 0
 
     courses = config.get('courses', {})
     if day not in courses:
@@ -80,9 +81,9 @@ class Admin(commands.Cog):
     if timeSlot >= len(courses[day]):
       for i in range(timeSlot - len(courses[day]) + 1):
         courses[day].append([])
-    courses[day][timeSlot].append({ 'groups': groups, 'courseName': courseName, 'link': link, 'gapWeeks': gapWeeks, 'startWeek': startWeek })
+    courses[day][timeSlot].append({ 'groups': groups, 'courseName': courseName, 'link': link, 'gapWeeks': gapWeeks, 'startWeek': startWeek, 'noNotify': not noNotify })
     config.save('courses', courses)
-    await ctx.send(f'Saved course {courseName} for {len(groups)} groups on {day} in time slot {timeSlot}{f" (once every {gapWeeks + 1} weeks, starting week {startWeek + 1})"if gapWeeks > 0 else ""}')
+    await ctx.send(f'Saved course {courseName} for {len(groups)} groups on {day} in time slot {timeSlot}{f" (once every {gapWeeks + 1} weeks, starting week {startWeek + 1})"if gapWeeks > 0 else ""}{" without notification" if noNotify else ""}')
   
   @commands.command()
   @commands.check(mod_only)

@@ -5,7 +5,7 @@ import config
 import embeds
 from datetime import datetime
 
-UPDATE_INTERVAL = 1.0
+UPDATE_INTERVAL = 5.0
 
 class CourseStart(commands.Cog):
   def __init__(self, bot):
@@ -29,8 +29,12 @@ class CourseStart(commands.Cog):
       timeSlotIdx = timeSlots.index(currentTimeSlot)
 
       if timeSlotIdx < len(dayCourses):
+        messages = 0
         for course in dayCourses[timeSlotIdx]:
+          if course['noNotify']:
+            continue
           embed = embeds.make_course_embed(currentTimeSlot, course)
           await self.bot.get_channel(int(config.get('courseStartChannel'))).send(', '.join(course['groups']) + ' your course is starting', embed=embed, delete_after=config.get('notificationLifespan', 5 * 60))
-        if config.get('courseStartMentionEveryone', False):
+          messages += 1
+        if messages > 0 and config.get('courseStartMentionEveryone', False):
           await self.bot.get_channel(int(config.get('courseStartChannel'))).send('@everyone', delete_after=config.get('notificationLifespan', 5 * 60))

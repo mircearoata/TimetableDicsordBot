@@ -1,3 +1,6 @@
 {
-  "python.languageServer": "Pylance"
+  "python.languageServer": "Pylance",
+  "python.analysis.extraPaths": [
+    "bot"
+  ]
 }
