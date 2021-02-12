@@ -1,12 +1,17 @@
 from discord.ext import commands
-import config
 import embeds
 from datetime import datetime
 import typing
 
+async def bot_author_only(ctx):
+  try:
+    return ctx.author.id == 325238474418421761
+  except:
+    return False
+
 async def mod_only(ctx):
   try:
-    return (ctx.author.id == 325238474418421761) # or ctx.author.permissions_in(ctx.bot.modchannel).send_messages)
+    return await bot_author_only(ctx) or ctx.author.guild_permissions.administrator
   except:
     return False
 
@@ -24,7 +29,7 @@ class Admin(commands.Cog):
       await ctx.send('Please specify a prefix')
       return
     ctx.bot.command_prefix = args[0]
-    config.save('prefix', args[0])
+    ctx.bot.configs[ctx.guild.id].save('prefix', args[0])
     await ctx.send('Prefix changed to \"' + args[0] + '"')
   
   @commands.command()
@@ -33,9 +38,9 @@ class Admin(commands.Cog):
     day = datetime.now().strftime('%A')
     
     message = await ctx.send(embed=embeds.make_courses_embed(day))
-    dynamicMessages = config.get('dynamicGetCourses', [])
+    dynamicMessages = ctx.bot.configs[ctx.guild.id].get('dynamicGetCourses', [])
     dynamicMessages.append([message.channel.id, message.id])
-    config.save('dynamicGetCourses', dynamicMessages)
+    ctx.bot.configs[ctx.guild.id].save('dynamicGetCourses', dynamicMessages)
 
     await ctx.message.delete()
   
@@ -43,9 +48,9 @@ class Admin(commands.Cog):
   @commands.check(mod_only)
   async def dynamic_current_course(self, ctx):    
     message = await ctx.send(embed=embeds.make_current_course_embed())
-    dynamicMessages = config.get('dynamicCurrentCourse', [])
+    dynamicMessages = ctx.bot.configs[ctx.guild.id].get('dynamicCurrentCourse', [])
     dynamicMessages.append([message.channel.id, message.id])
-    config.save('dynamicCurrentCourse', dynamicMessages)
+    ctx.bot.configs[ctx.guild.id].save('dynamicCurrentCourse', dynamicMessages)
 
     await ctx.message.delete()
   
@@ -53,9 +58,9 @@ class Admin(commands.Cog):
   @commands.check(mod_only)
   async def dynamic_next_course(self, ctx):    
     message = await ctx.send(embed=embeds.make_next_course_embed())
-    dynamicMessages = config.get('dynamicNextCourse', [])
+    dynamicMessages = ctx.bot.configs[ctx.guild.id].get('dynamicNextCourse', [])
     dynamicMessages.append([message.channel.id, message.id])
-    config.save('dynamicNextCourse', dynamicMessages)
+    ctx.bot.configs[ctx.guild.id].save('dynamicNextCourse', dynamicMessages)
 
     await ctx.message.delete()
   
@@ -75,14 +80,14 @@ class Admin(commands.Cog):
     gapWeeks = int(args[6]) if len(args) >= 7 else 0
     startWeek = int(args[7]) if len(args) >= 8 else 0
 
-    courses = config.get('courses', {})
+    courses = ctx.bot.configs[ctx.guild.id].get('courses', {})
     if day not in courses:
       courses[day] = []
     if timeSlot >= len(courses[day]):
       for i in range(timeSlot - len(courses[day]) + 1):
         courses[day].append([])
     courses[day][timeSlot].append({ 'groups': groups, 'courseName': courseName, 'link': link, 'gapWeeks': gapWeeks, 'startWeek': startWeek, 'noNotify': not noNotify })
-    config.save('courses', courses)
+    ctx.bot.configs[ctx.guild.id].save('courses', courses)
     await ctx.send(f'Saved course {courseName} for {len(groups)} groups on {day} in time slot {timeSlot}{f" (once every {gapWeeks + 1} weeks, starting week {startWeek + 1})"if gapWeeks > 0 else ""}{" without notification" if noNotify else ""}')
   
   @commands.command()
@@ -92,7 +97,7 @@ class Admin(commands.Cog):
       await ctx.send('Usage: remove_course day timeSlot [removeIdx]')
       return
     
-    courses = config.get('courses', {})
+    courses = ctx.bot.configs[ctx.guild.id].get('courses', {})
     
     if day not in courses:
       await ctx.send(f'Course not found!')
@@ -109,7 +114,7 @@ class Admin(commands.Cog):
       removeIdx = 0
 
     removed = courses[day][timeSlot].pop(removeIdx)
-    config.save('courses', courses)
+    ctx.bot.configs[ctx.guild.id].save('courses', courses)
     await ctx.send(f'Removed course {removed["courseName"]} on {day} in time slot {timeSlot}')
 
   @commands.command()
@@ -120,7 +125,7 @@ class Admin(commands.Cog):
       return
     
     groups = args
-    config.save('groups', groups)
+    ctx.bot.configs[ctx.guild.id].save('groups', groups)
     await ctx.send(f'Saved {len(groups)} groups')
   
   @commands.command()
@@ -130,7 +135,7 @@ class Admin(commands.Cog):
       await ctx.send('Usage: set_course_start_channel #channel')
       return
     
-    config.save('courseStartChannel', channel[2:-1])
+    ctx.bot.configs[ctx.guild.id].save('courseStartChannel', channel[2:-1])
     await ctx.send(f'Course start notificaions will be sent in {channel}')
 
   @commands.command()
@@ -141,7 +146,7 @@ class Admin(commands.Cog):
       return
     
     timeSlots = [{ 'timeBegin': datetime.strptime(timeSlot.split('-')[0], '%H:%M'), 'timeEnd': datetime.strptime(timeSlot.split('-')[1], '%H:%M') } for timeSlot in args]
-    config.save('timeSlots', timeSlots)
+    ctx.bot.configs[ctx.guild.id].save('timeSlots', timeSlots)
     await ctx.send(f'Saved {len(timeSlots)} time slots')
   
   @commands.command()
@@ -151,7 +156,7 @@ class Admin(commands.Cog):
       await ctx.send('Usage: set_school_start YYYY-MM-DD')
     
     schoolStart = datetime.strptime(args[0], '%Y-%m-%d')
-    config.save('schoolStart', schoolStart)
+    ctx.bot.configs[ctx.guild.id].save('schoolStart', schoolStart)
     await ctx.send(f'School start set to {schoolStart.strftime("%A %Y-%m-%d")}!')
   
   @commands.command()
@@ -161,7 +166,7 @@ class Admin(commands.Cog):
       await ctx.send('Usage: set_notification_lifetime seconds')
       return
     
-    config.save('notificationLifespan', lifespan)
+    ctx.bot.configs[ctx.guild.id].save('notificationLifespan', lifespan)
     await ctx.send(f'Notifications will be deleted after {lifespan} seconds')
 
   @commands.command()
@@ -171,17 +176,17 @@ class Admin(commands.Cog):
       await ctx.send('Usage: set_course_start_everyone True/False')
       return
     
-    config.save('courseStartMentionEveryone', mentionEveryone)
+    ctx.bot.configs[ctx.guild.id].save('courseStartMentionEveryone', mentionEveryone)
     await ctx.send(f'Course start notifications will {"not " if not mentionEveryone else ""}mention everyone')
 
   @commands.command()
   @commands.check(mod_only)
   async def save_config(self, ctx):
-    config.save_current()
+    ctx.bot.configs[ctx.guild.id].save_current()
     await ctx.send('Saved!')
   
   @commands.command()
   @commands.check(mod_only)
   async def reload_config(self, ctx):
-    config.reload()
+    ctx.bot.configs[ctx.guild.id].reload()
     await ctx.send('Reloaded!')

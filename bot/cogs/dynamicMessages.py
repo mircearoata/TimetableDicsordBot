@@ -1,5 +1,4 @@
 from discord.ext import tasks, commands
-import config
 import embeds
 from datetime import datetime
 
@@ -48,37 +47,40 @@ class DynamicMessages(commands.Cog):
 
   @tasks.loop(seconds=UPDATE_INTERVAL)
   async def update_dynamic_get_courses(self):
-    day = datetime.now().strftime('%A')
-    embed = embeds.make_courses_embed(day)
-    dynamicMessages = config.get('dynamicGetCourses', [])
+    for guild_id, config in self.bot.configs.items():
+      day = datetime.now().strftime('%A')
+      embed = embeds.make_courses_embed(day, config)
+      dynamicMessages = config.get('dynamicGetCourses', [])
 
-    toRemove = await self.update_messages(dynamicMessages, embed)
-    
-    for remove in toRemove:
-      dynamicMessages.remove(remove)
-    if len(toRemove) > 0:
-      config.save('dynamicGetCourses', dynamicMessages)
+      toRemove = await self.update_messages(dynamicMessages, embed)
+      
+      for remove in toRemove:
+        dynamicMessages.remove(remove)
+      if len(toRemove) > 0:
+        config.save('dynamicGetCourses', dynamicMessages)
 
   @tasks.loop(seconds=UPDATE_INTERVAL)
   async def update_dynamic_current_course(self):
-    embed = embeds.make_current_course_embed()
-    dynamicMessages = config.get('dynamicCurrentCourse', [])
-    
-    toRemove = await self.update_messages(dynamicMessages, embed)
-    
-    for remove in toRemove:
-      dynamicMessages.remove(remove)
-    if len(toRemove) > 0:
-      config.save('dynamicCurrentCourse', dynamicMessages)
+    for guild_id, config in self.bot.configs.items():
+      embed = embeds.make_current_course_embed(config)
+      dynamicMessages = config.get('dynamicCurrentCourse', [])
+      
+      toRemove = await self.update_messages(dynamicMessages, embed)
+      
+      for remove in toRemove:
+        dynamicMessages.remove(remove)
+      if len(toRemove) > 0:
+        config.save('dynamicCurrentCourse', dynamicMessages)
 
   @tasks.loop(seconds=UPDATE_INTERVAL)
   async def update_dynamic_next_course(self):
-    embed = embeds.make_next_course_embed()
-    dynamicMessages = config.get('dynamicNextCourse', [])
+    for guild_id, config in self.bot.configs.items():
+      embed = embeds.make_next_course_embed(config)
+      dynamicMessages = config.get('dynamicNextCourse', [])
 
-    toRemove = await self.update_messages(dynamicMessages, embed)
-    
-    for remove in toRemove:
-      dynamicMessages.remove(remove)
-    if len(toRemove) > 0:
-      config.save('dynamicNextCourse', dynamicMessages)
+      toRemove = await self.update_messages(dynamicMessages, embed)
+      
+      for remove in toRemove:
+        dynamicMessages.remove(remove)
+      if len(toRemove) > 0:
+        config.save('dynamicNextCourse', dynamicMessages)
