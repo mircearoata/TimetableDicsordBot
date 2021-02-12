@@ -26,7 +26,10 @@ class DynamicMessages(commands.Cog):
     if not message:
       print(f'Message {channelID}/{messageID} not found.')
       return False
-    await message.edit(*args, **kwargs)
+    try:
+      await message.edit(*args, **kwargs)
+    except:
+      return False
     return True
 
   async def update_messages(self, messages, embed):
