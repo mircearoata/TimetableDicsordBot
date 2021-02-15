@@ -54,7 +54,7 @@ def make_current_course_embed(config):
       links = 'N/A'
       
       if currentTimeSlotIdx < len(dayCourses) and len(dayCourses[currentTimeSlotIdx]) > 0:
-        groups, courses, links = get_time_slot_embed_content(dayCourses[currentTimeSlotIdx])
+        groups, courses, links = get_time_slot_embed_content(dayCourses[currentTimeSlotIdx], config)
       
       embed.add_field(name=f'{currentTimeSlot["timeBegin"].strftime("%H:%M")} - {currentTimeSlot["timeEnd"].strftime("%H:%M")}', value=groups, inline=True)
       embed.add_field(name='Course', value=courses, inline=True)
@@ -86,7 +86,7 @@ def make_next_course_embed(config):
     links = 'N/A'
 
     if nextTimeSlotIdx < len(dayCourses) and len(dayCourses[nextTimeSlotIdx]) > 0:
-      groups, courses, links = get_time_slot_embed_content(dayCourses[nextTimeSlotIdx])
+      groups, courses, links = get_time_slot_embed_content(dayCourses[nextTimeSlotIdx], config)
     
     embed.add_field(name=f'{nextTimeSlot["timeBegin"].strftime("%H:%M")} - {nextTimeSlot["timeEnd"].strftime("%H:%M")}', value=groups, inline=True)
     embed.add_field(name='Course', value=courses, inline=True)
@@ -97,8 +97,8 @@ def make_next_course_embed(config):
       embed = discord.Embed(title=f'No upcoming course', color=0x00ff00)
       return embed
 
-def make_course_embed(timeSlot, course):
-  groups, courses, links = get_time_slot_embed_content([course])
+def make_course_embed(timeSlot, course, config):
+  groups, courses, links = get_time_slot_embed_content([course], config)
   
   embed = discord.Embed(title=f'{course["courseName"]} ({timeSlot["timeBegin"].strftime("%H:%M")} - {timeSlot["timeEnd"].strftime("%H:%M")})', color=0x00ff00)
   embed.add_field(name=f'{timeSlot["timeBegin"].strftime("%H:%M")} - {timeSlot["timeEnd"].strftime("%H:%M")}', value=groups, inline=True)
