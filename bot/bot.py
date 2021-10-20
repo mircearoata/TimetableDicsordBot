@@ -20,11 +20,11 @@ class Bot(discord.ext.commands.Bot):
     self.add_cog(DynamicMessages(self))
     self.add_cog(CourseStart(self))
     self.configs = {}
-    migrations(self.configs)
 
   async def on_ready(self):
     print('We have logged in as {0.user}'.format(self))
     self.configs = {guild.id: Config(guild.id) for guild in self.guilds}
+    migrations(self.configs)
     self.get_cog('DynamicMessages').start()
     self.get_cog('CourseStart').start()
 
